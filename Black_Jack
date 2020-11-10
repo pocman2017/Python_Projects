@@ -1,0 +1,219 @@
+# Вариант игры 21(Black Jack)
+import random
+
+# Создаем колоду 52 карты со значкеиями очков подсчета
+
+suits = ('Hearts', 'Diamonds', 'Spades', 'Clubs')
+ranks = ('Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Ace')
+values = {'Two':2, 'Three':3, 'Four':4, 'Five':5, 'Six':6, 'Seven':7, 'Eight':8, 'Nine':9, 'Ten':10, 'Jack':10,
+         'Queen':10, 'King':10, 'Ace':11}
+playing = True
+# Можно без скобок, скобки для наследования
+class Card():
+
+    def __init__(self, suit, rank):
+        self.suit = suit
+        self.rank = rank
+
+    def __str__(self):
+        return self.rank+ " of "+self.suit
+
+class Deck:
+    def __init__(self):
+        self.deck = [] # Пустой список для колоды
+        for suit in suits:
+            for rank in ranks:
+                self.deck.append(Card(suit, rank))
+    # Для вывода колоды
+    def __str__(self):
+        deck_comp = ''
+        for card in self.deck:
+            deck_comp += '\n'+ card.__str__()
+        return "The Deck(Колода) has: "+deck_comp
+    # Тусовка колоды
+    def shuffle(self):
+        random.shuffle(self.deck)
+    # Выдача одной карты
+    def deal(self):
+        single_card = self.deck.pop()
+        return  single_card
+# Класс РУКИ, карта на руки
+class Hand:
+    def __init__(self):
+        self.cards = []
+        self.value = 0
+        self.aces = 0
+        # Добавить карту
+    def add_card(self, card):
+        # Карта приходит из класса Deck.deal() через метод deal()
+        # --> single Card(suit, rank)
+        self.cards.append(card)
+        # Подсчет очков в картах
+        self.value += values[card.rank]
+
+        # Для отслеживания тузов на РУКЕ
+        if card.rank == 'Ace':
+            self.aces += 1
+        # Для подсчета тузов 1 или 11 очков
+    def adjast_for_ace(self):
+        while self.value > 21 and self.aces > 0:
+            self.value -= 10
+            self.aces -= 1
+
+
+# Тест для сдачи и тусовки колоды Строка 38
+#test_deck = Deck()
+#test_deck.shuffle()
+#print(test_deck)
+
+# Тест для выдачи карты и подсчета очков на РУКЕ строка 52
+# test_deck = Deck()
+# test_deck.shuffle()
+# PLAYER 1
+# test_player = Hand()
+# Deal Сдача одной карты из deck Card(suit, rank)
+# pulled_card = test_deck.deal()
+# Вывод выданной карты случайным образом из колоды
+# print(pulled_card)
+# test_player.add_card(pulled_card)
+# Вывод очков на РУКЕ
+# print(test_player.value)
+
+# Класс Фишки
+class Chips:
+    # Ставки изначально на руках 100 фишек
+    def __init__(self, total = 100):
+        self.total = total
+        self.bet = 0
+    # Ставка выиграла
+    def win_bet(self):
+        self.total += self.bet
+    # Ставка проиграла
+    def lose_bet(self):
+        self.total -= self.bet
+
+# Функция сделать ставку через наследование класса Chips(фишки)_
+def take_bet(chips):
+    while True:
+        try:
+            chips.bet = int(input("How many chips would you like to bet? "))
+        except:
+            print("Sorry please provide an integer")
+        else:
+            if chips.bet > chips.total:
+                print("Sorry, you do not have enough chips! You have: {}".format(chips.total))
+            else:
+                break
+
+# Функция для набора карт
+def hit(deck, hand):
+    single_card = deck.deal()
+    hand.add_card(single_card) # Берем карту
+    hand.adjast_for_ace() # Проверяем тузы
+# Функция вывода карт
+def show_some(player, dealer):
+    print("DealerHand:")
+    print("one card hidden")
+    print(dealer.cards[1])
+    print('\n')
+    print("Players Hand:")
+    for card in player.cards:
+        print(card)
+# Показать все карты в игре
+def show_all(player, dealer):
+    print('Dealers Hand:')
+    for card in dealer.cards:
+        print(card)
+    print('\n')
+    print('Players Hand:')
+    for card in player.cards:
+        print(card)
+
+# Добираем или стоим
+def hit_or_stand(deck, hand):
+    global playing
+    while True:
+        x = input('Hit or stand? Enter h or s')
+        if x[0].lower() == 'h':
+            hit(deck, hand)
+        elif x[0].lower() == 's':
+            print("Player Stands Dealer's Turn")
+            playing = False
+        else:
+            print("Sorry, i did no understand that, Enter 'h' or 's' only")
+            continue
+        break
+# Игрок проиграл
+def player_busts(player, dealer, chips):
+    print("Bust Player!")
+    chips.lose_bet() # Забираем фишки
+# Игрок выиграл
+def player_wins(player, dealer, chips):
+    print("Player Wins!")
+    chips.win_bet() # Начисляем фишки игроку
+# Дилер проиграл
+def dealer_busts(player, dealer, chips):
+    print("Player Wins! Dealer Lose!")
+    chips.win_bet()  # Начисляем фишки игроку
+# Дилер выиграл
+def dealer_wins(player, dealer, chips):
+    print("Bust Player! Dealer Wins")
+    chips.lose_bet()  # Забираем фишки
+# Ничья
+def push(player, dealer):
+    print('Dealer and Player tie! PUSH')
+
+# Описание Игры
+while True:
+    # Перемешиваем колоду
+    deck = Deck()
+    deck.shuffle()
+    # Сдаем карты Игроку и Дилеру
+    player_hand = Hand()
+    player_hand.add_card(deck.deal())
+    player_hand.add_card(deck.deal())
+
+    dealer_hand = Hand()
+    dealer_hand.add_card(deck.deal())
+    dealer_hand.add_card(deck.deal())
+
+    # Задаем количество фишек
+    player_chips = Chips()
+    # Запрашиваем ставку
+    take_bet(player_chips)
+    # Показываем карты
+    show_some(player_hand, dealer_hand)
+
+    while playing:
+        hit_or_stand(deck, player_hand)
+        show_some(player_hand, dealer_hand)
+
+        if player_hand.value > 21:
+            player_busts(player_hand, dealer_hand, player_chips)
+
+            break
+        if player_hand.value <= 21:
+            while dealer_hand.value < player_hand.value:
+                hit(deck, dealer_hand)
+
+            show_all(player_hand, dealer_hand)
+            # Описываем ситуации при игре
+            if dealer_hand.value > 21:
+                dealer_busts(player_hand, dealer_hand, player_chips)
+            elif dealer_hand.value > player_hand.value:
+                dealer_wins(player_hand, dealer_hand, player_chips)
+            elif dealer_hand.value < player_hand.value:
+                player_wins(player_hand, dealer_hand, player_chips)
+            else:
+                push(player_hand, dealer_hand)
+        print('\n Player total chips are at: {}'.format(player_chips.total))
+
+        # Спрашиваем: Хотите сыграть ещё?
+        new_game = input("Would you like to play again?")
+
+        if new_game[0].lower() == 'y':
+            playing = True
+            continue
+        else:
+            print("Thank you for playing!")
+            break
